@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AutoDrive Motors · Concesionaria de Cartagena</title>
+    <!--
+        El ?v= es anti-cache. Sin el, el navegador sigue sirviendo el .js y el
+        .css viejos aunque el servidor ya mande otros, y el sintoma es
+        "arreglaste el bug y sigue igual". Al cambiar el CSS o el JS hay que
+        cambiar este numero.
+
+        El build= del body es solo un numero de version interno para las
+        capturas de diagnostico. No se muestra en pantalla.
+    -->
+    <link rel="stylesheet" href="/css/estilos.css?v=20261008-8">
+    <link rel="icon" type="image/png" href="/img/escudo.png">
+</head>
+<body data-build="20261008-8">
+<div class="pagina">
+
+<header class="cabecera">
+    <div class="cabecera-contenido">
+        <div class="escudo-celda">
+            <img src="/img/escudo.png" width="197" height="260" alt="Escudo de AutoDrive Motors">
+        </div>
+        <div class="marca">
+            <h1>AutoDrive Motors</h1>
+            <p class="subtitulo">Inventario, clientes y ventas</p>
+        </div>
+
+        <nav class="pestanas">
+            <button class="pestana activa" data-panel="inicio">Inicio</button>
+            <button class="pestana" data-panel="clientes">Clientes</button>
+            <button class="pestana" data-panel="vehiculos">Vehículos</button>
+            <button class="pestana" data-panel="ventas">Ventas</button>
+            <button class="pestana" data-panel="mantenimientos">Servicio</button>
+        </nav>
+    </div>
+</header>
+
+<main class="contenido">
+
+    <!-- ============================================ PANEL INICIO -->
+    <section id="panel-inicio" class="panel activo">
+        <h2>Resumen</h2>
+
+        <div class="tarjetas" id="tarjetas">
+            <article class="tarjeta" data-recurso="/clientes">
+                <span class="tarjeta-etiqueta">Clientes</span>
+                <span class="tarjeta-valor" data-campo="conteo">—</span>
+            </article>
+            <article class="tarjeta" data-recurso="/vehiculos">
+                <span class="tarjeta-etiqueta">Vehículos</span>
+                <span class="tarjeta-valor" data-campo="conteo">—</span>
+            </article>
+            <article class="tarjeta" data-recurso="/vehiculos/disponibles">
+                <span class="tarjeta-etiqueta">Disponibles</span>
+                <span class="tarjeta-valor" data-campo="conteo">—</span>
+            </article>
+            <article class="tarjeta" data-recurso="/ventas">
+                <span class="tarjeta-etiqueta">Ventas</span>
+                <span class="tarjeta-valor" data-campo="conteo">—</span>
+            </article>
+            <article class="tarjeta" data-recurso="/mantenimientos">
+                <span class="tarjeta-etiqueta">Servicio</span>
+                <span class="tarjeta-valor" data-campo="conteo">—</span>
+            </article>
+        </div>
+
+        <h3>Qué significa cada color</h3>
+        <div class="leyenda">
+            <div class="leyenda-fila">
+                <span class="badge disponible">Disponible</span>
+                <span>En el patio, listo para vender. Es lo único que se puede mover hoy. Por eso va en azul.</span>
+            </div>
+            <div class="leyenda-fila">
+                <span class="badge en_mantenimiento">En servicio</span>
+                <span>Apartado del patio. No se puede vender hasta cerrar el servicio.</span>
+            </div>
+            <div class="leyenda-fila">
+                <span class="badge vendido">Vendido</span>
+                <span>Salió de la concesionaria. Ya no está disponible y no vuelve.</span>
+            </div>
+        </div>
+
+        <h3>Tasa de cambio</h3>
+        <div class="tasa" id="tasa">
+            <div class="tasa-principal">
+                <span class="tasa-valor" id="tasa-valor">—</span>
+                <span class="tasa-unidad" id="tasa-unidad"></span>
+            </div>
+            <div class="tasa-meta">
+                <span id="tasa-fecha" class="tasa-fecha"></span>
+                <span id="tasa-origen" class="insignia"></span>
+            </div>
+        </div>
+        <p class="nota">
+            El precio en dólares se calcula con la tasa del día, que se consulta por internet
+            y se guarda durante media hora. Si internet no responde, el sistema sigue
+            funcionando con una tasa de referencia y te avisa: <b>una venta nunca se
+            pierde porque no haya conexión</b>.
+        </p>
+
+        <h3>Cómo funciona</h3>
+        <ul class="reglas">
+            <li>Un vehículo se vende <b>una sola vez</b>. Ya vendido o en servicio, no se puede volver a vender.</li>
+            <li>Ningún precio puede ser negativo.</li>
+            <li>Dos vehículos no pueden tener la misma placa.</li>
+            <li>Dos clientes no pueden registrarse con el mismo correo.</li>
+            <li>Al registrar una venta, la fecha y el total se calculan solos.</li>
+            <li>Por encima de <b>$ 100.000.000</b> el precio lleva un <b>5 % de descuento</b> automático.</li>
+        </ul>
+    </section>
+
+    <!-- ============================================ PANEL CLIENTES -->
+    <section id="panel-clientes" class="panel">
+
+        <h2>Clientes</h2>
+
+        <!-- Avisos: un unico lugar para errores y confirmaciones -->
+        <div id="aviso" class="aviso oculto" role="alert">
+            <span id="aviso-titulo" class="aviso-titulo"></span>
+            <ul id="aviso-detalles" class="aviso-detalles"></ul>
+        </div>
+
+        <div class="dos-columnas">
+
+            <div class="panel-tarjeta">
+                <h3 id="form-titulo">Registrar cliente</h3>
+                <form id="form-cliente" novalidate>
+                    <input type="hidden" id="cliente-id">
+
+                    <label for="nombre">Nombre <span class="obligatorio">*</span></label>
+                    <input type="text" id="nombre" name="nombre" autocomplete="off">
+
+                    <label for="email">Correo <span class="obligatorio">*</span></label>
+                    <input type="text" id="email" name="email" autocomplete="off">
+                    <p class="ayuda">No se pueden registrar dos clientes con el mismo correo.</p>
+
+                    <label for="telefono">Teléfono</label>
+                    <input type="text" id="telefono" name="telefono" inputmode="numeric"
+                           pattern="[0-9]{0,10}" maxlength="10" autocomplete="off">
+                    <p class="ayuda">Solo números, hasta 10 dígitos.</p>
+
+                    <label for="direccion">Dirección</label>
+                    <input type="text" id="direccion" name="direccion" autocomplete="off">
+                    <p class="ayuda">Opcional, y editable después. Aparece en la tabla de la derecha.</p>
+
+                    <div class="acciones">
+                        <button type="submit" id="btn-guardar" class="boton primario">Registrar</button>
+                        <button type="button" id="btn-cancelar" class="boton oculto">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="panel-tarjeta">
+                <div class="tabla-cabecera">
+                    <h3>Registrados</h3>
+                    <button type="button" id="btn-recargar" class="boton fantasma">Recargar</button>
+                </div>
+                <div class="tabla-envoltorio">
+                    <table class="tabla">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Correo</th>
+                            <th>Teléfono</th>
+                            <th>Dirección</th>
+                            <th>Fecha de registro</th>
+                            <th class="col-acciones">Acciones</th>
+                        </tr>
+                        </thead>
+                        <tbody id="filas-clientes">
+                        <tr class="fila-vacia"><td colspan="7">Cargando…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ============================================ PANEL VEHICULOS -->
+    <section id="panel-vehiculos" class="panel">
+
+        <h2>Vehículos</h2>
+
+        <div id="aviso-vehiculos" class="aviso oculto" role="alert">
+            <span id="aviso-vehiculos-titulo" class="aviso-titulo"></span>
+            <ul id="aviso-vehiculos-detalles" class="aviso-detalles"></ul>
+        </div>
+
+        <div class="filtros">
+            <div class="campo-filtro">
+                <label for="filtro-marca">Filtrar por marca</label>
+                <input type="text" id="filtro-marca" placeholder="Ferrari" autocomplete="off">
+            </div>
+            <label class="casilla">
+                <input type="checkbox" id="filtro-disponibles">
+                Solo disponibles
+            </label>
+            <div class="acciones-filtro">
+                <button type="button" id="btn-filtrar" class="boton primario">Filtrar</button>
+                <button type="button" id="btn-quitar-filtro" class="boton fantasma">Limpiar</button>
+            </div>
+        </div>
+
+        <div class="dos-columnas">
+
+            <div class="panel-tarjeta">
+                <h3 id="form-vehiculo-titulo">Registrar vehículo</h3>
+                <form id="form-vehiculo" novalidate>
+                    <input type="hidden" id="vehiculo-id">
+
+                    <label for="v-placa">Placa <span class="obligatorio">*</span></label>
+                    <input type="text" id="v-placa" autocomplete="off">
+                    <p class="ayuda">Dos vehículos no pueden tener la misma placa.</p>
+
+                    <label for="v-marca">Marca <span class="obligatorio">*</span></label>
+                    <input type="text" id="v-marca" autocomplete="off">
+
+                    <label for="v-modelo">Modelo <span class="obligatorio">*</span></label>
+                    <input type="text" id="v-modelo" autocomplete="off">
+
+                    <label for="v-anio">Año</label>
+                    <input type="text" id="v-anio" inputmode="numeric" autocomplete="off">
+
+                    <label for="v-color">Color</label>
+                    <input type="text" id="v-color" autocomplete="off">
+
+                    <label for="v-precio">Precio (COP) <span class="obligatorio">*</span></label>
+                    <input type="text" id="v-precio" inputmode="decimal" autocomplete="off">
+                    <p class="ayuda">No puede ser negativo. Por encima de $100.000.000 lleva 5 % de descuento al venderlo.</p>
+
+                    <div class="acciones">
+                        <button type="submit" id="btn-guardar-vehiculo" class="boton primario">Registrar</button>
+                        <button type="button" id="btn-cancelar-vehiculo" class="boton oculto">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="panel-tarjeta">
+                <div class="tabla-cabecera">
+                    <h3 id="titulo-catalogo">Todos los vehículos</h3>
+                    <button type="button" id="btn-recargar-vehiculos" class="boton fantasma">Recargar</button>
+                </div>
+                <div class="tabla-envoltorio">
+                    <table class="tabla">
+                        <thead>
+                        <tr>
+                            <th>Placa</th>
+                            <th>Marca</th>
+                            <th>Modelo</th>
+                            <th>Año</th>
+                            <th>Color</th>
+                            <th>Precio</th>
+                            <th>Estado</th>
+                            <th>Pasar a</th>
+                            <th class="col-acciones">Acciones</th>
+                        </tr>
+                        </thead>
+                        <tbody id="filas-vehiculos">
+                        <tr class="fila-vacia"><td colspan="9">Cargando…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="nota">
+                    El estado de un vehículo <b>cambia solo</b>: nunca se escribe a mano.
+                    Se mueve por el desplegable de la derecha, y solo de tres maneras:
+                    venderlo, mandarlo a servicio, o cerrar el servicio que tenía abierto.
+                    Un vehículo ya vendido no vuelve a estar disponible.
+                </p>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ============================================ MODAL MANTENIMIENTO -->
+    <div id="modal-velo" class="velo oculto">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+            <h3 id="modal-titulo">Abrir servicio</h3>
+            <p class="modal-nota" id="modal-subtitulo"></p>
+
+            <label for="m-tipo">Tipo <span class="obligatorio">*</span></label>
+            <input type="text" id="m-tipo" autocomplete="off">
+
+            <label for="m-descripcion">Descripción</label>
+            <input type="text" id="m-descripcion" autocomplete="off">
+
+            <label for="m-costo">Costo (COP) <span class="obligatorio">*</span></label>
+            <input type="text" id="m-costo" inputmode="decimal" autocomplete="off">
+            <p class="ayuda">No puede ser negativo. Al guardar, el vehículo queda en servicio y deja de estar disponible para la venta.</p>
+
+            <div class="acciones">
+                <button type="button" id="modal-guardar" class="boton primario">Registrar servicio</button>
+                <button type="button" id="modal-cerrar" class="boton fantasma">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ PANEL VENTAS -->
+    <section id="panel-ventas" class="panel">
+
+        <h2>Ventas</h2>
+
+        <div id="aviso-ventas" class="aviso oculto" role="alert">
+            <span id="aviso-ventas-titulo" class="aviso-titulo"></span>
+            <ul id="aviso-ventas-detalles" class="aviso-detalles"></ul>
+        </div>
+
+        <div class="dos-columnas">
+
+            <div class="panel-tarjeta">
+                <h3>Registrar venta</h3>
+                <form id="form-venta" novalidate>
+
+                    <label for="venta-cliente">Cliente <span class="obligatorio">*</span></label>
+                    <select id="venta-cliente"></select>
+
+                    <label for="venta-vehiculo">Vehículo <span class="obligatorio">*</span></label>
+                    <select id="venta-vehiculo"></select>
+                    <p class="ayuda">Aquí solo aparecen los vehículos disponibles. Los que están en servicio o ya se vendieron no se pueden vender.</p>
+
+                    <div id="simulacion" class="simulacion oculto">
+                        <div class="simulacion-fila">
+                            <span>Valor del vehículo</span>
+                            <b id="sim-valor">—</b>
+                        </div>
+                        <div class="simulacion-fila">
+                            <span>Descuento</span>
+                            <b id="sim-descuento">—</b>
+                        </div>
+                        <div class="simulacion-fila total">
+                            <span>Total</span>
+                            <b id="sim-total">—</b>
+                        </div>
+                        <div class="simulacion-fila">
+                            <span>Equivalente en USD</span>
+                            <b id="sim-usd">—</b>
+                        </div>
+                        <p class="simulacion-nota" id="sim-explicacion"></p>
+                    </div>
+
+                    <div class="acciones">
+                        <button type="submit" id="btn-guardar-venta" class="boton primario" disabled>Registrar venta</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="panel-tarjeta">
+                <div class="tabla-cabecera">
+                    <h3>Ventas registradas</h3>
+                    <button type="button" id="btn-recargar-ventas" class="boton fantasma">Recargar</button>
+                </div>
+                <div class="tabla-envoltorio">
+                    <table class="tabla">
+                        <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Cliente</th>
+                            <th>Vehículo</th>
+                            <th>Valor</th>
+                            <th>Descuento</th>
+                            <th>Total</th>
+                            <th>USD</th>
+                        </tr>
+                        </thead>
+                        <tbody id="filas-ventas">
+                        <tr class="fila-vacia"><td colspan="7">Cargando…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="nota">
+                    Las ventas no se pueden borrar: son el historial del negocio y se conservan
+                    como registro de lo que ya salió de la concesionaria.
+                </p>
+            </div>
+
+        </div>
+    </section>
+
+    <section id="panel-mantenimientos" class="panel">
+        <div id="aviso-mantenimientos" class="aviso oculto" role="alert">
+            <span id="aviso-mantenimientos-titulo" class="aviso-titulo"></span>
+            <ul id="aviso-mantenimientos-detalles" class="aviso-detalles"></ul>
+        </div>
+        <div class="panel-rejilla">
+
+            <div class="panel-tarjeta">
+                <div class="tabla-cabecera">
+                    <h2>Servicio</h2>
+                <h3>Historial de servicio</h3>
+                    <div class="acciones-filtro">
+                        <label class="casilla">
+                            <input type="checkbox" id="filtro-solo-abiertos">
+                            Solo abiertos
+                        </label>
+                        <button type="button" id="btn-recargar-mantenimientos" class="boton fantasma">Recargar</button>
+                    </div>
+                </div>
+                <div class="tabla-envoltorio">
+                    <table class="tabla">
+                        <thead>
+                        <tr>
+                            <th>Inicio</th>
+                            <th>Vehículo</th>
+                            <th>Tipo</th>
+                            <th>Descripción</th>
+                            <th>Costo</th>
+                            <th>Estado</th>
+                            <th>Acción</th>
+                        </tr>
+                        </thead>
+                        <tbody id="filas-mantenimientos">
+                        <tr class="fila-vacia"><td colspan="7">Cargando…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="nota">
+                    Cerrar un servicio devuelve el vehículo a la lista de disponibles,
+                    pero solo si no queda ninguno abierto. Un vehículo puede tener varios
+                    a la vez, y cerrar uno no lo devuelve al patio si el otro sigue pendiente.
+                </p>
+            </div>
+
+        </div>
+    </section>
+
+</main>
+
+<footer class="pie">
+    <p>Proyecto académico de Análisis y Diseño de Software · Spring Boot 3.3.5 · Java 17 · PostgreSQL 18</p>
+    <p class="build">build <b id="build"></b></p>
+</footer>
+</div>
+
+<script src="/js/app.js?v=20261008-2"></script>
+</body>
+</html>

@@ -1,0 +1,927 @@
+/* ==========================================================================
+   CONCESIONARIA DE CARTAGENA
+   Direccion visual: grid specimen (seed 72f780c7). El mundo aporta tipografia,
+   paleta, densidad y un solo gesto: la reticula de construccion visible. El
+   layout sigue siendo una consola de inventario con controles web estandar.
+
+   Raise desde japanese-high-density-web: densidad y modulos rayados, sin la
+   inflacion de espacios en blanco de una cuadricula SaaS por defecto.
+   Raise desde rw-manual-acetate-tab-board: ningun estado usa curva de
+   suavizado; todo cambio es un escalon de 90 ms en dos cuadros.
+   Raise desde ikeda-datamatics: la cifra manda, en tabular y apretada.
+   Raise desde notation-diagram-systems-orienteering-map: la leyenda explica
+   que significa cada color de estado.
+   ========================================================================== */
+
+@import url('/fuentes/archivo.css?v=20261008-3');
+
+/* ----------------------------------------------------------------- tokens */
+
+:root {
+    /* Suelo: blanco roto y calido. No es crema ni papel viejo: es un blanco
+       que aguanta una retícula y no marca pantalla en un portatil de mostrador. */
+    --suelo:        #f7f7f5;
+    --superficie:   #ffffff;
+    --superficie-2: #fbfbfa;
+
+    /* Tinta */
+    --tinta:        #16181d;
+    --tinta-media:  #4a4f5a;
+    --tinta-suave:  #6b7280;
+
+    /* Rosso Corsa: el color que posee la carcasa. Se queda en la cabecera y
+       en los botones, y deja de ser tambien el color de "disponible". */
+    --rosso:        #d40000;
+    --rosso-osc:    #9c0000;
+    --rosso-lavado: #fdeeee;
+
+    /* Azzurro: el color de lo que esta disponible para vender.
+       Es el mismo azul de la bandera italiana que cruza el escudo, y por eso
+       convive con el giallo sin parecido de familia. */
+    --azzurro:        #1b4d8f;
+    --azzurro-osc:    #143a6d;
+    --azzurro-lavado: #eaf1f9;
+
+    /* Giallo Modena: el plano de acento. Uno solo por vista. */
+    --giallo:       #ffd500;
+    --giallo-tinta: #16181d;   /* sobre giallo el texto va en negro: 14.8:1 */
+    --giallo-lavado:#fff8dc;
+
+    /* Estado vendido: verde profundo, no verdehopefully pastel. */
+    --verde:        #0b6b3a;
+    --verde-lavado: #e8f5ee;
+
+    /* Reglas de la retícula */
+    --regla:        #dcdcd8;
+    --regla-fuerte: #16181d;
+    --celda:        28px;
+
+    --rejilla-tinta:      rgba(22, 24, 29, .055);
+
+    --radio:     3px;   /* el grid specimen no admite esquinas blandas */
+    --radio-chico: 2px;
+
+    --sombra:      0 1px 2px rgba(22, 24, 29, .06), 0 4px 12px rgba(22, 24, 29, .05);
+    --sombra-alta: 0 2px 4px rgba(22, 24, 29, .07), 0 12px 32px rgba(22, 24, 29, .09);
+
+    --paso: 90ms;   /* escalon de dos cuadros. Sin easing en ningun sitio. */
+}
+
+/* ------------------------------------------------------------------ reset */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+    margin: 0;
+    color: var(--tinta);
+    font-family: 'Archivo', "Segoe UI", system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    /* Todo peso en pesos y anos va en cifras de ancho fijo: las columnas de
+       dinero tienen que alinearse solas al ordenar la tabla. */
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+/* Superficies del navegador, que aparecen siempre. Se pintan desde la paleta. */
+::selection { background: var(--giallo); color: var(--giallo-tinta); }
+
+* { scrollbar-color: #c3c3bd var(--suelo); scrollbar-width: thin; }
+*::-webkit-scrollbar { width: 11px; height: 11px; }
+*::-webkit-scrollbar-track { background: var(--suelo); }
+*::-webkit-scrollbar-thumb {
+    background: #c3c3bd;
+    border: 3px solid var(--suelo);
+    border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover { background: #a9a9a1; }
+
+:where(a, button, input, select, textarea):focus-visible {
+    outline: 2px solid var(--rosso);
+    outline-offset: 2px;
+    border-radius: var(--radio-chico);
+}
+
+code {
+    font-family: Consolas, "SF Mono", "Courier New", monospace;
+    font-size: .92em;
+    background: var(--superficie-2);
+    border: 1px solid var(--regla);
+    border-radius: var(--radio-chico);
+    padding: 1px 5px;
+}
+
+/* --------------------------------------------------------------- cabecera */
+
+.cabecera {
+    background: var(--rosso);
+    color: #fff;
+    border-bottom: 1px solid var(--rosso-osc);
+}
+
+/* Tres bloques: escudo, marca, y las divisiones. Las divisiones se quedan al
+   medio de la cabecera, no pegadas al borde derecho, porque son el acceso
+   principal y lo primero que se busca. */
+.cabecera-contenido {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 18px 24px 0;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 0 24px;
+}
+
+/* El escudo vive en una celda blanca: sobre el rail rojo, el escudo se
+   disuelve sin ella, porque su franja superior tambien es roja.
+
+   El tamaño va en la imagen, no en la celda. Con la celda en altura fija y la
+   imagen con su tamaño intrinseco, gana la fila del grid y la celda se
+   desborda hacia el contenido de abajo. */
+.escudo-celda {
+    background: var(--superficie);
+    border: 1px solid rgba(255, 255, 255, .5);
+    border-radius: var(--radio);
+    padding: 5px 6px;
+    display: block;
+    flex: none;
+    align-self: center;
+}
+
+.escudo-celda img {
+    display: block;
+    width: 39px;
+    height: 52px;
+    max-width: none;
+}
+
+.marca { min-width: 0; padding-bottom: 14px; }
+
+.cabecera h1 {
+    margin: 0;
+    font-size: clamp(20px, 2.4vw, 30px);
+    font-weight: 800;
+    letter-spacing: -.028em;
+    line-height: 1.04;
+    text-wrap: balance;
+}
+
+.subtitulo {
+    margin: 4px 0 0;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, .82);
+    letter-spacing: .01em;
+}
+
+.pestanas {
+    display: flex;
+    gap: 1px;
+    align-self: end;
+    align-items: flex-end;
+    background: rgba(0, 0, 0, .18);
+    border: 1px solid rgba(255, 255, 255, .22);
+    border-bottom: none;
+    border-radius: var(--radio) var(--radio) 0 0;
+    overflow: hidden;
+    flex-wrap: wrap;
+}
+
+.pestana {
+    appearance: none;
+    border: none;
+    border-right: 1px solid rgba(255, 255, 255, .16);
+    background: transparent;
+    color: rgba(255, 255, 255, .84);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .005em;
+    padding: 11px 16px 10px;
+    cursor: pointer;
+    transition: background-color var(--paso) steps(2), color var(--paso) steps(2);
+}
+
+.pestana:last-child { border-right: none; }
+.pestana:hover { background: rgba(0, 0, 0, .16); color: #fff; }
+
+/* La division activa es el unico plano de giallo de la pagina. */
+.pestana.activa {
+    background: var(--giallo);
+    color: var(--giallo-tinta);
+}
+
+
+/* -------------------------------------------------------------- contenido */
+
+/* Columna de altura completa: el contenido crece y empuja el pie al borde
+   inferior de la ventana, en vez de dejar un hueco vacio debajo cuando la
+   division que se abre es corta. El suelo con la retícula va en .pagina para
+   que el fondo cubra toda la pagina, no solo la parte con contenido. */
+.pagina {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: var(--suelo);
+    background-image:
+        repeating-linear-gradient(to right,  var(--rejilla-tinta) 0 1px, transparent 1px var(--celda)),
+        repeating-linear-gradient(to bottom, var(--rejilla-tinta) 0 1px, transparent 1px var(--celda));
+    background-attachment: fixed;
+}
+
+.contenido {
+    max-width: 1400px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 24px 24px 40px;
+    flex: 1 0 auto;
+}
+
+.panel { display: none; }
+.panel.activo { display: block; }
+
+.panel h2 {
+    margin: 0 0 20px;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    text-wrap: balance;
+}
+
+.panel h3 {
+    margin: 34px 0 12px;   /* mas aire arriba que abajo: el titulo pertenece al bloque que sigue */
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--tinta-media);
+}
+
+.panel h2 + h3 { margin-top: 0; }
+
+/* Dos columnas densas: el formulario y su tabla, como en un terminal de
+   punto de venta. Cada columna es una celda, y se rayan entre si. */
+.dos-columnas {
+    display: grid;
+    grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+    gap: 0;
+    border: 1px solid var(--regla);
+    border-radius: var(--radio);
+    background: var(--superficie);
+    box-shadow: var(--sombra);
+    overflow: hidden;
+}
+
+.panel-rejilla {
+    border: 1px solid var(--regla);
+    border-radius: var(--radio);
+    background: var(--superficie);
+    box-shadow: var(--sombra);
+    overflow: hidden;
+}
+
+.panel-tarjeta {
+    padding: 20px;
+    background: var(--superficie);
+}
+
+.dos-columnas > .panel-tarjeta + .panel-tarjeta {
+    border-left: 1px solid var(--regla);
+}
+
+.panel-tarjeta h3 { margin-bottom: 14px; }
+
+@media (max-width: 900px) {
+    /* minmax(0, ...) y no 1fr: un 1fr vale minmax(auto, 1fr), y ese auto deja
+       que la columna midiese al menos lo que ocupa su contenido mas ancho. Con
+       una tabla de nueve columnas y cabeceras que no parten, eso empujaba la
+       pagina entera hacia la derecha y el movil se salia de la pantalla. */
+    .dos-columnas { grid-template-columns: minmax(0, 1fr); }
+    .dos-columnas > .panel-tarjeta + .panel-tarjeta {
+        border-left: none;
+        border-top: 1px solid var(--regla);
+    }
+}
+
+/* En pantallas estrechas la barra de divisiones se convierte en una tira que
+   corre en horizontal: cinco pestañas en dos filas se leen peor que una fila
+   que hay que deslizar, y nada queda escondido. */
+@media (max-width: 620px) {
+    .cabecera-contenido { padding: 14px 14px 0; gap: 12px; }
+    .pestanas {
+        width: 100%;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+    .pestanas::-webkit-scrollbar { display: none; }
+    .pestana { white-space: nowrap; }
+    .contenido { padding: 18px 14px 32px; }
+
+    /* La tabla se desliza en horizontal, pero con el celaje apretado caben
+       mas columnas antes de tener que deslizar. */
+    .tabla th, .tabla td { padding: 8px 8px; }
+    .tabla-envoltorio { overscroll-behavior-x: contain; }
+}
+
+/* ------------------------------------------------------------- resumen */
+
+.tarjetas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1px;
+    background: var(--regla);
+    border: 1px solid var(--regla);
+    border-radius: var(--radio);
+    overflow: hidden;
+    margin-bottom: 28px;
+}
+
+.tarjeta {
+    background: var(--superficie);
+    padding: 15px 17px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+/* La cifra manda: tabular, apretada, sin adorno. */
+.tarjeta-valor {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -.035em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.tarjeta-etiqueta {
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--tinta-media);
+    order: 2;
+}
+
+/* El conteo que de verdad manda al que vende: lo disponible. Azzurro, el
+   mismo color que su insignia. */
+.tarjeta[data-recurso="/vehiculos/disponibles"] {
+    background: var(--azzurro);
+    color: #fff;
+}
+.tarjeta[data-recurso="/vehiculos/disponibles"] .tarjeta-etiqueta { color: rgba(255,255,255,.88); }
+
+.tarjeta-error .tarjeta-valor { color: #b42318; font-size: 15px; }
+
+/* --------------------------------------------------------------- tasa */
+
+.tasa {
+    background: var(--superficie);
+    border: 1px solid var(--regla);
+    border-radius: var(--radio);
+    padding: 16px 18px;
+    box-shadow: var(--sombra);
+    margin-bottom: 14px;
+}
+
+.tasa-principal { display: flex; align-items: baseline; gap: 10px; }
+
+.tasa-valor {
+    font-size: 27px;
+    font-weight: 800;
+    letter-spacing: -.03em;
+    font-variant-numeric: tabular-nums;
+}
+
+.tasa-unidad { color: var(--tinta-media); font-size: 13px; }
+
+.tasa-meta {
+    margin-top: 9px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.tasa-fecha { font-size: 12.5px; color: var(--tinta-media); }
+
+.insignia {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 999px;
+    border: 1px solid var(--regla);
+    background: var(--superficie-2);
+    color: var(--tinta-media);
+}
+
+.insignia.externa  { background: var(--verde-lavado); color: var(--verde); border-color: #b7ddc6; }
+.insignia.respaldo { background: var(--giallo-lavado); color: #7a5a00; border-color: #f0d98a; }
+
+.nota {
+    margin: 14px 0 0;
+    font-size: 12.5px;
+    color: var(--tinta-media);
+    max-width: 96ch;
+    line-height: 1.65;
+}
+
+.reglas {
+    max-width: 78ch;
+    color: var(--tinta-media);
+    padding-left: 20px;
+    margin: 0;
+}
+
+.reglas li { margin-bottom: 6px; }
+.reglas b {
+    color: var(--rosso);
+    font-weight: 700;
+    letter-spacing: .01em;
+}
+
+/* -------------------------------------------------------------- filtros */
+
+.filtros {
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+    flex-wrap: wrap;
+    background: var(--superficie);
+    border: 1px solid var(--regla);
+    border-radius: var(--radio);
+    padding: 13px 15px;
+    margin-bottom: 16px;
+    box-shadow: var(--sombra);
+}
+
+.campo-filtro { min-width: 200px; }
+.campo-filtro label { margin-top: 0; }
+
+.casilla {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    padding-bottom: 8px;
+}
+
+.casilla input {
+    width: 16px; height: 16px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: var(--rosso);
+}
+
+.acciones-filtro { display: flex; gap: 8px; margin-left: auto; }
+
+/* --------------------------------------------------------------- forms */
+
+label {
+    display: block;
+    margin-top: 13px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .02em;
+    color: var(--tinta-media);
+}
+
+.obligatorio { color: var(--rosso); }
+
+input[type="text"],
+input[type="email"],
+input[type="number"],
+select {
+    width: 100%;
+    font: inherit;
+    font-size: 13.5px;
+    color: var(--tinta);
+    background: var(--superficie-2);
+    border: 1px solid var(--regla);
+    border-radius: var(--radio);
+    padding: 8px 11px;
+    transition: border-color var(--paso) steps(2), background-color var(--paso) steps(2);
+}
+
+input::placeholder { color: var(--tinta-media); opacity: 1; }
+
+input:hover, select:hover { border-color: #b9b9b2; }
+
+input:focus, select:focus {
+    background: var(--superficie);
+    border-color: var(--rosso);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--rosso-lavado);
+}
+
+select {
+    cursor: pointer;
+    appearance: none;
+    /* La flecha se dibuja: un glifo unicode seria un disfraz de icono. */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%2316181d' stroke-width='1.6' stroke-linecap='square'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 11px center;
+    padding-right: 32px;
+}
+
+.ayuda {
+    margin: 5px 0 0;
+    font-size: 12.5px;
+    color: var(--tinta-suave);
+    line-height: 1.5;
+}
+
+.acciones { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+
+/* -------------------------------------------------------------- botones */
+
+.boton {
+    appearance: none;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .005em;
+    padding: 9px 15px;
+    border: 1px solid transparent;
+    border-radius: var(--radio);
+    background: var(--superficie-2);
+    color: var(--tinta);
+    cursor: pointer;
+    transition: background-color var(--paso) steps(2), border-color var(--paso) steps(2),
+                color var(--paso) steps(2);
+}
+
+.boton.primario {
+    background: var(--rosso);
+    border-color: var(--rosso);
+    color: #fff;
+}
+.boton.primario:hover:not(:disabled) { background: var(--rosso-osc); border-color: var(--rosso-osc); }
+
+.boton.fantasma {
+    background: transparent;
+    border-color: var(--regla);
+    color: var(--tinta-media);
+    font-weight: 500;
+    padding: 7px 13px;
+}
+.boton.fantasma:hover { background: var(--superficie-2); border-color: #b9b9b2; color: var(--tinta); }
+
+.boton.peligro {
+    background: transparent;
+    border-color: #f2c0bb;
+    color: #b42318;
+    padding: 5px 10px;
+    font-size: 12.5px;
+}
+.boton.peligro:hover { background: #fdf3f2; border-color: #e09891; }
+
+.boton.mini {
+    background: transparent;
+    border-color: #e8c98a;
+    color: #7a5a00;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.boton.mini:hover { background: var(--giallo-lavado); border-color: var(--giallo); }
+
+/* Un boton deshabilitado tiene que seguir siendo legible: se atenua la
+   superficie, no el texto. Un gris de 2.5:1 sobre fondo claro no se lee ni
+   queriendo, y es justo el estado que mas falta se lea. */
+.boton:disabled {
+    background: #f1f1ee;
+    border-color: #dcdcd8;
+    color: #5c626c;
+    cursor: not-allowed;
+}
+
+/* --------------------------------------------------------------- tablas */
+
+.tabla-cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.tabla-cabecera h3 { margin: 0; }
+
+.tabla-envoltorio { overflow-x: auto; }
+
+.tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.tabla th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .075em;
+    text-transform: uppercase;
+    color: var(--tinta-media);
+    padding: 8px 11px;
+    background: var(--superficie-2);
+    border-bottom: 1px solid var(--regla);
+    border-top: 1px solid var(--regla);
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.tabla th:first-child { border-left: 1px solid var(--regla); }
+.tabla th:last-child  { border-right: 1px solid var(--regla); }
+
+.tabla td {
+    padding: 9px 11px;
+    border-bottom: 1px solid #eeeeeb;
+    vertical-align: middle;
+}
+
+.tabla tbody tr:hover { background: var(--rosso-lavado); }
+.tabla tbody tr:hover td { border-color: #f6d6d6; }
+
+.col-acciones { text-align: right; }
+.tabla td.col-acciones { text-align: right; white-space: nowrap; }
+
+.fila-vacia td {
+    text-align: center;
+    color: var(--tinta-suave);
+    padding: 30px 12px;
+    font-style: normal;
+}
+
+/* El precio va en tabular y en la tinta, para que la columna se lea como
+   una columna de dinero y no como texto suelto. */
+.tabla td.num { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+
+.celda-tipo { max-width: 230px; font-weight: 500; }
+.celda-desc { min-width: 260px; max-width: 340px; color: var(--tinta-media); font-size: 12px; }
+
+/* La celda de color solo lleva el nombre, sin punto de color al lado.
+   Un cuadradito junto a "Gris" adivina el tono a partir de una palabra suelta,
+   y en una columna de veinte filas se lee como ruido: el nombre ya dice el
+   color, y el punto solo lo repetia. */
+.tabla td.celda-color { white-space: nowrap; }
+
+.tabla td.celda-modelo { white-space: nowrap; }
+
+/* --------------------------------------------------------------- badges */
+
+.badge {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .01em;
+    padding: 4px 11px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+/* Los tres estados del negocio en color, porque son la informacion principal
+   de una concesionaria: que se puede vender hoy.
+
+   Disponible va en azzurro, que es lo unico que el vendedor puede mover. En
+   servicio va en giallo, y ya salido en verde profundo. El rosso sigue siendo
+   el color de la casa, pero ya no dice "esto se puede vender": asi el rojo se
+   lee como marca y el azul como disponibilidad, que son dos cosas distintas.
+
+   Texto blanco sobre azzurro 7.9:1, negro sobre giallo 12.5:1, blanco sobre
+   verde 6.6:1. Los tres pasan con holgura. */
+.badge.disponible       { background: var(--azzurro); color: #fff; }
+.badge.en_mantenimiento { background: var(--giallo); color: var(--giallo-tinta); }
+.badge.vendido          { background: var(--verde); color: #fff; }
+
+.badge.en_proceso       { background: var(--giallo); color: var(--giallo-tinta); }
+.badge.finalizado       { background: var(--verde-lavado); color: var(--verde); border: 1px solid #b7ddc6; }
+
+/* Leyenda: los tres estados en fila, con su color real al lado. Si el color
+   significa algo, hay que escribir que significa. */
+.leyenda {
+    border: 1px solid var(--regla);
+    border-radius: var(--radio);
+    background: var(--superficie);
+    box-shadow: var(--sombra);
+    overflow: hidden;
+    margin-bottom: 26px;
+}
+
+.leyenda-fila {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--regla);
+}
+
+.leyenda-fila:last-child { border-bottom: none; }
+
+.leyenda-fila > span:last-child {
+    font-size: 13.5px;
+    color: var(--tinta-media);
+    line-height: 1.5;
+}
+
+.leyenda-fila .badge { flex: none; width: 118px; text-align: center; }
+
+@media (max-width: 560px) {
+    .leyenda-fila { flex-direction: column; align-items: flex-start; gap: 5px; }
+    .leyenda-fila .badge { width: auto; }
+}
+
+/* --------------------------------------------------------- transiciones */
+
+.celda-estado select {
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 6px 30px 6px 10px;
+    border: 1px solid var(--regla);
+    border-radius: var(--radio);
+    background-color: var(--superficie-2);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%2316181d' stroke-width='1.6' stroke-linecap='square'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    color: var(--tinta);
+    cursor: pointer;
+    appearance: none;
+    transition: border-color var(--paso) steps(2), background-color var(--paso) steps(2);
+}
+
+.celda-estado select:hover { border-color: #b9b9b2; }
+.celda-estado select:focus { border-color: var(--rosso); box-shadow: 0 0 0 3px var(--rosso-lavado); }
+.celda-estado select:disabled { background-image: none; padding-right: 10px; cursor: default; }
+
+.estado-terminal {
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--tinta-suave);
+}
+
+/* ----------------------------------------------------------- simulacion */
+
+.simulacion {
+    margin-top: 15px;
+    border: 1px solid var(--regla);
+    border-radius: var(--radio);
+    background: var(--superficie-2);
+    padding: 12px 14px;
+}
+
+.simulacion-fila {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    padding: 5px 0;
+    font-size: 12.5px;
+    color: var(--tinta-media);
+}
+
+.simulacion-fila b {
+    color: var(--tinta);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+}
+
+.simulacion-fila.total {
+    border-top: 1px solid var(--regla);
+    margin-top: 5px;
+    padding-top: 9px;
+}
+
+.simulacion-fila.total b { font-size: 21px; font-weight: 800; color: var(--rosso); letter-spacing: -.02em; }
+.simulacion-fila.con-descuento b { color: var(--verde); }
+
+.simulacion-nota {
+    margin: 9px 0 0;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--tinta-suave);
+    border-top: 1px dashed var(--regla);
+    padding-top: 9px;
+}
+
+.simulacion-nota:empty { display: none; }
+
+/* --------------------------------------------------------------- avisos */
+
+.aviso {
+    border: 1px solid var(--regla);
+    border-radius: var(--radio);
+    background: var(--superficie);
+    padding: 12px 15px;
+    margin-bottom: 16px;
+}
+
+.aviso.error {
+    background: #fdf3f2;
+    border-color: #f2c0bb;
+    color: #7a1a12;
+}
+
+.aviso.exito {
+    background: var(--verde-lavado);
+    border-color: #b7ddc6;
+    color: #07452a;
+}
+
+.aviso-titulo { font-weight: 600; }
+.aviso-detalles { margin: 6px 0 0; padding-left: 20px; font-size: 13px; }
+.aviso-detalles:empty { display: none; }
+
+.oculto { display: none !important; }
+
+/* --------------------------------------------------------------- modales */
+
+.velo {
+    position: fixed;
+    inset: 0;
+    background: rgba(22, 24, 29, .58);
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    z-index: 50;
+}
+
+.modal {
+    background: var(--superficie);
+    border: 1px solid var(--regla);
+    border-radius: var(--radio);
+    box-shadow: var(--sombra-alta);
+    padding: 22px 24px;
+    width: min(520px, 100%);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal h3 {
+    margin: 0 0 4px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--tinta-media);
+}
+
+.modal-nota {
+    margin: 0 0 6px;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+    color: var(--rosso);
+}
+
+.modal label { margin-top: 14px; }
+
+/* ------------------------------------------------------------------ pie */
+
+/* El pie no se pega al final del contenido: se queda siempre abajo del todo,
+   con margin-top:auto para empujarlo cuando la pagina es mas corta que la
+   ventana. */
+.pie {
+    border-top: 1px solid var(--regla);
+    background: var(--superficie);
+    padding: 18px 24px;
+    margin-top: auto;
+    flex: none;
+}
+
+.pie p {
+    max-width: 1400px;
+    margin: 0 auto;
+    font-size: 12px;
+    color: var(--tinta-media);
+    line-height: 1.6;
+    text-align: center;
+}
+
+/* --------------------------------------------------------------- motion */
+
+/* El raise del manual acetate: nada suaviza. Todo cambia en un escalon de dos
+   cuadros, con lo cual la pagina se lee como una hoja que avanza, no como una
+   que se desliza. */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        transition-duration: 1ms !important;
+        animation-duration: 1ms !important;
+        scroll-behavior: auto !important;
+    }
+    body { background-attachment: scroll; }
+}
