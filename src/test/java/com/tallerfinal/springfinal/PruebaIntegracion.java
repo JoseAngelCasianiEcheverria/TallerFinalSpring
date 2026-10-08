@@ -7,6 +7,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -18,8 +19,10 @@ import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
  * PostgreSQL embebido, nunca contra Neon ni contra un PostgreSQL instalado
  * (aunque las variables de entorno de la base estén puestas). La instancia se
  * crea una sola vez por corrida y las tablas se vacían antes de cada prueba.
+ * Todas comparten el mismo contexto, con {@code MockMvc} para hacer pedidos.
  */
 @SpringBootTest
+@AutoConfigureMockMvc
 public abstract class PruebaIntegracion {
 
 	private static final EmbeddedPostgres POSTGRES = iniciarPostgres();
