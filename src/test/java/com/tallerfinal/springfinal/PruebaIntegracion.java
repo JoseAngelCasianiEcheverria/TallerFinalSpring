@@ -31,7 +31,8 @@ public abstract class PruebaIntegracion {
 	static void configurarBase(DynamicPropertyRegistry registro) {
 		registro.add("spring.datasource.url", () -> POSTGRES.getJdbcUrl("postgres", "postgres"));
 		registro.add("spring.datasource.username", () -> "postgres");
-		registro.add("spring.datasource.password", () -> "");
+		// El PostgreSQL embebido no pide contraseña, pero el chequeo de arranque (RNF-8) exige una.
+		registro.add("spring.datasource.password", () -> "postgres");
 	}
 
 	@BeforeEach
